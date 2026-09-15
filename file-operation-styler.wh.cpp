@@ -1,9 +1,12 @@
 // ==WindhawkMod==
 // @id              file-operation-styler
 // @name            File Operation Styler
+// @name:zh-CN      文件操作窗口美化
 // @description     Portable custom presentation for native Explorer file operations with a skin-safe unified presentation.
-// @version         1.0.0
+// @description:zh-CN Windows 11 资源管理器文件操作窗口的现代自绘界面，保留系统原生文件操作引擎。本版为简体中文汉化，并修复了原版在较新 shell32 上整体失效的问题。
+// @version         1.0.1
 // @author          digART
+// @author:zh-CN     digART（汉化与兼容修复：Z2549）
 // @github          https://github.com/digart11
 // @license         GPL-3.0
 // @include         explorer.exe
@@ -13,45 +16,84 @@
 
 // ==WindhawkModReadme==
 /*
-# File Operation Styler
+# 文件操作窗口美化（File Operation Styler）
 
-A modern replacement for the standard Windows 11 file operation window.
+**简体中文汉化版 + 新版 shell32 兼容修复**
 
-File Operation Styler gives copy, move, delete, and recycle operations a cleaner modern layout while keeping the normal Windows file operation behavior.
+用现代化的自绘界面替换 Windows 11 默认的文件操作窗口，同时**完全保留系统原生文件操作引擎**：复制、移动、删除以及冲突与错误处理仍然由 Windows 负责。
+
+- 本汉化版仓库：https://github.com/Z2549/File-Operation-Styler
+- 上游原版：https://github.com/digart11/File-Operation-Styler （作者 digART，GPL-3.0）
 
 ![File Operation Styler](https://raw.githubusercontent.com/digart11/File-Operation-Styler/master/images/file-operation-styler.png)
 
-
-### Default vs File Operation Styler
+### 原生界面 vs 美化后
 
 ![Default vs File Operation Styler](https://raw.githubusercontent.com/digart11/File-Operation-Styler/master/images/file-operation-styler-compare.png)
 
-### Themes
+### 内置主题
 
 ![File Operation Styler Themes](https://raw.githubusercontent.com/digart11/File-Operation-Styler/master/images/file-operation-styler-themes.png)
-## Features
 
-- Modern copy and move progress window
-- Circular percentage indicator
-- Transferred size, remaining items, speed, and estimated time
-- Progress graph in More Details view
-- Multiple file operations in the same window
-- Pause, resume, and cancel controls
-- Works with normal Windows conflict and error dialogs
-- Several built-in themes
-- Custom colors, fonts, text sizes, and progress thickness
+## 功能
 
-## Customization
+- 现代化的复制 / 移动进度窗口
+- 环形百分比指示器
+- 已传输大小、剩余项目数、速度与预计剩余时间
+- 「更多详细信息」视图中的速度曲线图
+- 同一个窗口内可同时显示多个文件操作
+- 暂停 / 继续 / 取消按钮
+- 与系统的冲突、错误对话框正常共存
+- 多套内置主题
+- 可自定义颜色、字体、文字大小与进度条粗细
 
-Choose one of the included themes or adjust a few basic options to create your own look.
+## 自定义
 
-## Notes
+选一套内置主题，或微调下面的几项基础设置，做出自己的样子。设置界面已汉化，中文系统下整个设置页显示中文。
 
-File Operation Styler changes the appearance of the normal file operation window only.  
-Windows continues to handle the actual copy, move, delete, conflicts, and errors.
+## 说明
 
-Settings changes apply to new file-operation windows; operations already in progress may use the native Windows presentation until they complete.
+- 本 Mod 只改变文件操作窗口的**外观**，实际的复制、移动、删除、冲突与错误处理仍由 Windows 完成。
+- 设置改动对新打开的文件操作窗口生效；正在进行中的操作可能继续使用原生界面直到完成。
 
+## 支持的版本
+
+| Windows / shell32 版本 | 状态 |
+| --- | --- |
+| Windows 11 24H2（shell32 `10.0.26100.4768`，build 26100） | ✅ **已实测通过**，本汉化版的主要目标 |
+| 其他 Windows 11（更早的 shell32，如 22621 / 22631） | ⚠️ 代码层面已保留旧拼写兼容（`idOperationTile`、`eltRateChart_New` 等仍可用），但未在真机实测 |
+| Windows 10 及更早版本 | ❌ 不支持（本 Mod 针对 Windows 11 的文件操作窗口） |
+
+### 本版修复了什么（原版 1.0.0 在新版 shell32 上会整体失效）
+
+原版把 shell32 的**符号名**与 **DirectUI 元素 id** 写成了硬性假设，系统版本一变就整体失效。在新版 shell32 上这是**三层互相独立**的故障，修好一层才会露出下一层：
+
+1. **引擎从不注入** —— 新版 shell32 不再生成普通析构符号 `??1OperationTileElement@@`，而原版把它列为硬性必需；符号预解析失败后 Windhawk 根本不会加载这个 DLL。
+   → 现改为**可选符号**，并挂上 `scalar / vector deleting destructor`（`??_E` / `??_G`）作为等价替代。
+2. **磁贴根元素抓不到** —— 24H2 把 DirectUI 根元素改名为 `idOperationTile_old` / `idTileHeader_old`，原版硬编码裸名 `idOperationTile`，于是每次都停在「没有根元素」这个早退点，保留原生界面。
+   → 现改为对 `""` / `_old` / `_New` 三种后缀做**容错匹配**。
+3. **布局校验失败，仍然不上皮肤** —— 原版按 `eltRateChart_New` 查找速率曲线，而 24H2 用的是**裸名** `eltRateChart`（后缀被焊进了基名），「往名字后面追加后缀」永远拼不出裸名，速率曲线恒为 NULL，布局校验随之失败。
+   → 现改为**候选名生成器**：原样 → 原样+后缀 → **剥掉后缀的裸基名** → 裸基名+后缀，一处修复覆盖全部约 20 个元素名。
+
+👉 每个问题的根因、改法与验证方法，见仓库 README 的「支持的版本」与「修复详情」章节。
+
+## 汉化说明
+
+- **元数据与设置项**：严格遵循 Windhawk 官方本地化规范，以 `@name:zh-CN`、`@description:zh-CN`、
+  `@author:zh-CN`、`$name:zh-CN`、`$description:zh-CN`、`$options:zh-CN` 的形式**叠加**在英文原文之上，
+  英文原文一律保留，英文用户完全不受影响。
+- **自绘界面文字**：Windhawk 的本地化机制不覆盖运行期绘制的文字，因此本版按**系统 UI 语言**自动切换
+  （简体中文系统显示中文，其余显示英文）：完成 / 更多详细信息 / 收起详细信息 / 取消 / 正在计算… 等。
+- **特殊状态对话框**：原版只按英文标题判断「替换或跳过文件 / 文件正在使用 / 文件夹正在使用 / 找不到项目」，
+  中文版 Windows 上标题是本地化的，本版已同时匹配中文。
+
+## English
+
+A Simplified-Chinese localized fork of **File Operation Styler** by digART, plus compatibility fixes
+for newer shell32 builds. Windows 11 24H2 (shell32 `10.0.26100.4768`) is tested and supported;
+older Windows 11 shell32 builds keep working through backwards-compatible name matching;
+Windows 10 is not supported. Localization follows the official Windhawk convention
+(`@name:zh-CN`, `$name:zh-CN`, `$options:zh-CN`) layered on top of the original English strings.
 */
 // ==/WindhawkModReadme==
 
@@ -60,10 +102,14 @@ Settings changes apply to new file-operation windows; operations already in prog
 - customization:
   - enabled: false
     $name: Enable customization
+    $name:zh-CN: 启用自定义外观
     $description: Turn on themes and custom style settings.
+    $description:zh-CN: 打开主题与自定义样式设置。
   - preset: blueDark
     $name: Theme
+    $name:zh-CN: 主题
     $description: Choose a theme, then change anything below if you want.
+    $description:zh-CN: 先选一套主题，需要的话再改下面的项目。
     $options:
     - blueDark: Blue Dark
     - graphite: Graphite
@@ -71,33 +117,56 @@ Settings changes apply to new file-operation windows; operations already in prog
     - warmDark: Warm Dark
     - light: Light
     - system: Windows / System
+    $options:zh-CN:
+    - blueDark: 深蓝
+    - graphite: 石墨
+    - midnight: 午夜
+    - warmDark: 暖深色
+    - light: 浅色
+    - system: 跟随系统
   - colors:
     - backgroundOverride: ""
       $name: Background
+      $name:zh-CN: 背景色
     - accentOverride: ""
       $name: Accent
+      $name:zh-CN: 强调色
       $description: Circle, progress bar, graph, and links.
+      $description:zh-CN: 圆环、进度条、曲线图与链接。
     - primaryTextOverride: ""
       $name: Main text
+      $name:zh-CN: 主要文字
       $description: Large numbers and values.
+      $description:zh-CN: 大号数字与数值。
     - secondaryTextOverride: ""
       $name: Secondary text
+      $name:zh-CN: 次要文字
       $description: Labels and smaller text.
+      $description:zh-CN: 标签与较小文字。
     - inactiveOverride: ""
       $name: Track / inactive
+      $name:zh-CN: 轨道 / 未完成
       $description: Circle track and progress track.
+      $description:zh-CN: 圆环轨道与进度条轨道。
     $name: Colors
+    $name:zh-CN: 颜色
     $description: "Leave blank to use the theme color. Enter a hex color such as #2D8BE0."
+    $description:zh-CN: "留空则使用主题颜色。可填十六进制颜色，例如 #2D8BE0。"
   - style:
     - circleThickness: 7
       $name: Circle thickness
+      $name:zh-CN: 圆环粗细
     - progressThickness: 8
       $name: Progress bar thickness
+      $name:zh-CN: 进度条粗细
     $name: Progress style
+    $name:zh-CN: 进度样式
   - text:
     - fontPreset: default
       $name: Font
+      $name:zh-CN: 字体
       $description: Choose one font for the whole window.
+      $description:zh-CN: 为整个窗口选择一种字体。
       $options:
       - default: Windows default
       - segoeUI: Segoe UI
@@ -110,22 +179,51 @@ Settings changes apply to new file-operation windows; operations already in prog
       - georgia: Georgia
       - timesNewRoman: Times New Roman
       - consolas: Consolas
+      $options:zh-CN:
+      - default: Windows 默认
+      - segoeUI: Segoe UI
+      - segoeUIVariable: Segoe UI Variable
+      - arial: Arial
+      - calibri: Calibri
+      - tahoma: Tahoma
+      - verdana: Verdana
+      - trebuchetMS: Trebuchet MS
+      - georgia: Georgia
+      - timesNewRoman: Times New Roman
+      - consolas: Consolas
     - customFont: ""
       $name: Custom font
+      $name:zh-CN: 自定义字体
       $description: Optional. Enter an installed font name here to use it instead of the selection above.
+      $description:zh-CN: 可选。填写一个已安装的字体名，将覆盖上面的选择。
     - bodySize: 11
       $name: Details text size
+      $name:zh-CN: 详细信息文字大小
       $description: Source and destination, items, speed, time, Complete, and footer text.
+      $description:zh-CN: 源与目标、项目数、速度、时间、「完成」以及底部文字。
     - summarySize: 23
       $name: Transfer total size
+      $name:zh-CN: 传输总量文字大小
       $description: The large transferred / total line, for example 1.2 GB / 4.0 GB.
+      $description:zh-CN: 已传输 / 总量那一行大号文字，例如 1.2 GB / 4.0 GB。
     - percentSize: 26
       $name: Circle percentage size
+      $name:zh-CN: 圆环百分比大小
       $description: The percentage number inside the progress circle.
+      $description:zh-CN: 进度圆环中央的百分比数字。
     $name: Text
+    $name:zh-CN: 文字
   $name: Customization
+  $name:zh-CN: 自定义
 */
 // ==/WindhawkModSettings==
+
+// ---------------------------------------------------------------------------
+// zh-CN fork（Z2549）：简体中文汉化 + 新版 shell32 兼容修复。
+// 本地化遵循 Windhawk 官方规范：英文原文保留，叠加 @key:zh-CN / $key:zh-CN 变体。
+// 上游：https://github.com/digart11/File-Operation-Styler （GPL-3.0）
+// 兼容性修复的根因、改法与验证方法见仓库 README。
+// ---------------------------------------------------------------------------
 
 // 0.12 architecture: Explorer remains the operation engine and native
 // fallback, while normal-operation visuals are rendered in DPI-aware child
@@ -168,6 +266,25 @@ namespace
     static_assert(sizeof(unsigned long) == sizeof(ULONG));
     static_assert(sizeof(ATOM) == sizeof(unsigned short));
 
+    // 自绘界面用的少量文字需要自己本地化：Windhawk 的本地化机制
+    // （@key:zh-CN / $key:zh-CN）只覆盖元数据与设置项，运行期绘制的文字不在其中。
+    // 这里按系统 UI 语言选择：简体中文系统显示中文，其余显示英文。
+    bool UseSimplifiedChineseUi()
+    {
+        static const bool useChinese = []()
+        {
+            const LANGID langId = GetUserDefaultUILanguage();
+            return PRIMARYLANGID(langId) == LANG_CHINESE &&
+                   SUBLANGID(langId) == SUBLANG_CHINESE_SIMPLIFIED;
+        }();
+        return useChinese;
+    }
+
+    PCWSTR UiText(PCWSTR english, PCWSTR chinese)
+    {
+        return UseSimplifiedChineseUi() ? chinese : english;
+    }
+
     struct SkinState
     {
         bool active;
@@ -177,6 +294,29 @@ namespace
     };
 
     thread_local SkinState g_skinState{};
+
+    // Shell builds disagree on the DirectUI ids of the operation status tile.
+    // Windows 11 24H2 (shell32 10.0.26100.4768) names the tile roots
+    // "idOperationTile_old" / "idTileHeader_old", while other builds use the
+    // bare "idOperationTile" / "idTileHeader". Child ids drift the same way
+    // (the rate chart is "eltRateChart_New" on newer builds). Probing the
+    // canonical id plus the known suffixes keeps the mod working across builds
+    // instead of silently losing every element and rendering nothing.
+    PCWSTR const kSkinIdSuffixes[] = {L"", L"_old", L"_New"};
+    constexpr size_t kSkinIdSuffixCount =
+        sizeof(kSkinIdSuffixes) / sizeof(kSkinIdSuffixes[0]);
+
+    bool MakeSkinIdVariant(PCWSTR name, PCWSTR suffix, wchar_t *out,
+                           size_t outCount)
+    {
+        if (!name || !suffix || !out || !outCount)
+        {
+            return false;
+        }
+
+        int written = wsprintfW(out, L"%s%s", name, suffix);
+        return written > 0 && static_cast<size_t>(written) < outCount;
+    }
     std::atomic<bool> g_unloading{};
     std::mutex g_presentationActivationMutex;
     std::condition_variable g_presentationActivationCondition;
@@ -304,8 +444,28 @@ namespace
         bool isTileHeader = false;
         if (resourceName && !IS_INTRESOURCE(resourceName))
         {
-            isOperationTile = lstrcmpW(resourceName, L"idOperationTile") == 0;
-            isTileHeader = lstrcmpW(resourceName, L"idTileHeader") == 0;
+            // Accept the bare id and the "_old"/"_New" spellings used by
+            // different shell builds (24H2 uses "idOperationTile_old").
+            for (size_t i = 0; i < kSkinIdSuffixCount; ++i)
+            {
+                wchar_t candidate[64];
+
+                if (MakeSkinIdVariant(L"idOperationTile", kSkinIdSuffixes[i],
+                                      candidate, ARRAYSIZE(candidate)) &&
+                    lstrcmpW(resourceName, candidate) == 0)
+                {
+                    isOperationTile = true;
+                    break;
+                }
+
+                if (MakeSkinIdVariant(L"idTileHeader", kSkinIdSuffixes[i],
+                                      candidate, ARRAYSIZE(candidate)) &&
+                    lstrcmpW(resourceName, candidate) == 0)
+                {
+                    isTileHeader = true;
+                    break;
+                }
+            }
         }
 
         HRESULT result = DUIXmlParser_CreateElement_Original(
@@ -394,6 +554,17 @@ namespace
     using OperationTileElement_Destructor_t = void(__cdecl *)(
         OperationTileElement *thisPtr);
     OperationTileElement_Destructor_t OperationTileElement_Destructor_Original;
+
+    // Some shell32 builds don't emit an out-of-line ordinary destructor at all
+    // (it is inlined into the deleting destructors), which leaves the deleting
+    // destructors as the only hookable tile-destruction funnel. Both variants
+    // take the delete flags in RDX and return `this` in RAX.
+    using OperationTileElement_DeletingDestructor_t = void *(__cdecl *)(
+        OperationTileElement *thisPtr, unsigned int flags);
+    OperationTileElement_DeletingDestructor_t
+        OperationTileElement_ScalarDeletingDestructor_Original;
+    OperationTileElement_DeletingDestructor_t
+        OperationTileElement_VectorDeletingDestructor_Original;
 
     using COperationStatusTile_UpdateRemainingItemsAndSize_t =
         HRESULT(__cdecl *)(COperationStatusTile *thisPtr,
@@ -1408,22 +1579,157 @@ namespace
         }
     }
 
+    // ---------------------------------------------------------------------
+    // Shell builds disagree on the DirectUI ids of the operation status tile.
+    // Windows 11 24H2 (shell32 10.0.26100.4768) names the tile roots
+    // "idOperationTile_old" / "idTileHeader_old", while other builds use the
+    // bare "idOperationTile" / "idTileHeader". Child ids drift the same way
+    // (the rate chart is "eltRateChart_New" on newer builds). Probing the
+    // canonical id plus the known suffixes keeps the mod working across
+    // builds instead of silently losing every element and rendering nothing.
+    // ---------------------------------------------------------------------
+    // The mod was written against a build where the rate chart was spelled
+    // "eltRateChart_New", but 24H2 exposes the bare "eltRateChart". Appending
+    // suffixes alone can never recover the bare spelling, so the candidate list
+    // must also strip a baked-in suffix:
+    //   1) exactly what the caller asked for   ("eltRateChart_New")
+    //   2) caller name + each known suffix      ("eltRateChart_New_old")
+    //   3) suffix-stripped base name            ("eltRateChart")   <-- 24H2
+    //   4) stripped base + each known suffix    ("eltRateChart_old")
+    constexpr size_t kMaxSkinIdCandidates = 8;
+    constexpr size_t kSkinIdCandidateLength = 64;
+
+    void AddSkinIdCandidate(wchar_t (*out)[kSkinIdCandidateLength],
+                            size_t *count,
+                            size_t outCount,
+                            PCWSTR value)
+    {
+        if (!value || !*value || !count || *count >= outCount)
+        {
+            return;
+        }
+
+        for (size_t i = 0; i < *count; ++i)
+        {
+            if (lstrcmpW(out[i], value) == 0)
+            {
+                return;
+            }
+        }
+
+        lstrcpynW(out[*count], value,
+                  static_cast<int>(kSkinIdCandidateLength));
+        ++(*count);
+    }
+
+    size_t BuildSkinIdCandidates(PCWSTR name,
+                                 wchar_t (*out)[kSkinIdCandidateLength],
+                                 size_t outCount)
+    {
+        if (!name || !*name || !out || !outCount)
+        {
+            return 0;
+        }
+
+        size_t count = 0;
+
+        AddSkinIdCandidate(out, &count, outCount, name);
+
+        for (size_t i = 1; i < kSkinIdSuffixCount; ++i)
+        {
+            wchar_t candidate[kSkinIdCandidateLength];
+            if (MakeSkinIdVariant(name, kSkinIdSuffixes[i], candidate,
+                                  ARRAYSIZE(candidate)))
+            {
+                AddSkinIdCandidate(out, &count, outCount, candidate);
+            }
+        }
+
+        size_t nameLength = static_cast<size_t>(lstrlenW(name));
+        for (size_t i = 1; i < kSkinIdSuffixCount; ++i)
+        {
+            size_t suffixLength =
+                static_cast<size_t>(lstrlenW(kSkinIdSuffixes[i]));
+            if (nameLength <= suffixLength ||
+                lstrcmpW(name + nameLength - suffixLength,
+                         kSkinIdSuffixes[i]) != 0)
+            {
+                continue;
+            }
+
+            wchar_t base[kSkinIdCandidateLength];
+            lstrcpynW(base, name,
+                      static_cast<int>(nameLength - suffixLength + 1));
+            AddSkinIdCandidate(out, &count, outCount, base);
+
+            for (size_t j = 1; j < kSkinIdSuffixCount; ++j)
+            {
+                wchar_t candidate[kSkinIdCandidateLength];
+                if (MakeSkinIdVariant(base, kSkinIdSuffixes[j], candidate,
+                                      ARRAYSIZE(candidate)))
+                {
+                    AddSkinIdCandidate(out, &count, outCount, candidate);
+                }
+            }
+
+            break;
+        }
+
+        return count;
+    }
+
+    DirectUI::Element *FindDescendentBySkinIdEx(DirectUI::Element *root,
+                                                PCWSTR name,
+                                                wchar_t *matchedName,
+                                                size_t matchedNameCount)
+    {
+        if (!root || !name)
+        {
+            return nullptr;
+        }
+
+        wchar_t candidates[kMaxSkinIdCandidates][kSkinIdCandidateLength];
+        size_t count =
+            BuildSkinIdCandidates(name, candidates, kMaxSkinIdCandidates);
+
+        for (size_t i = 0; i < count; ++i)
+        {
+            ATOM id = StrToID_Original(candidates[i]);
+            if (!id)
+            {
+                continue;
+            }
+
+            if (DirectUI::Element *element =
+                    Element_FindDescendent_Original(root, id))
+            {
+                if (matchedName && matchedNameCount)
+                {
+                    lstrcpynW(matchedName, candidates[i],
+                              static_cast<int>(matchedNameCount));
+                }
+                return element;
+            }
+        }
+
+        return nullptr;
+    }
+
+    DirectUI::Element *FindDescendentBySkinId(DirectUI::Element *root,
+                                              PCWSTR name)
+    {
+        return FindDescendentBySkinIdEx(root, name, nullptr, 0);
+    }
+
     DirectUI::Element *FindSkinElement(DirectUI::Element *tileRoot,
                                        DirectUI::Element *tileHeaderRoot,
                                        PCWSTR name,
                                        bool allowHeaderFallback)
     {
-        ATOM id = StrToID_Original(name);
-        if (!id)
-        {
-            return nullptr;
-        }
-
-        DirectUI::Element *element =
-            Element_FindDescendent_Original(tileRoot, id);
+        DirectUI::Element *element = FindDescendentBySkinId(tileRoot, name);
         if (!element && allowHeaderFallback && tileHeaderRoot)
         {
-            element = Element_FindDescendent_Original(tileHeaderRoot, id);
+            element = FindDescendentBySkinId(tileHeaderRoot, name);
         }
 
         return element;
@@ -1443,19 +1749,13 @@ namespace
             return element;
         }
 
-        ATOM id = StrToID_Original(name);
-        if (!id)
-        {
-            return nullptr;
-        }
-
         // More/Fewer details is outside idOperationTile on this shell build.
         // Search only the verified CreateTileElement parent chain; do not
         // broaden the lookup process-wide.
         DirectUI::Element *searchRoot = parentElement;
         for (int depth = 0; searchRoot && depth < 6; ++depth)
         {
-            element = Element_FindDescendent_Original(searchRoot, id);
+            element = FindDescendentBySkinId(searchRoot, name);
             if (element)
             {
                 return element;
@@ -1737,9 +2037,9 @@ namespace
                             percentageBounds, &centeredText, &primaryBrush);
         if (ActiveElements().showCompleteLabel)
         {
-            graphics.DrawString(L"Complete", -1, selectedLabelFont,
-                                labelBounds, &centeredText,
-                                &secondaryBrush);
+            graphics.DrawString(UiText(L"Complete", L"完成"), -1,
+                                selectedLabelFont, labelBounds,
+                                &centeredText, &secondaryBrush);
         }
     }
 
@@ -1870,10 +2170,11 @@ namespace
         // Keep the fallback truthful without guessing Copy versus Move.
         if (state.deleteLikeKnown && state.deleteLike)
         {
-            return state.totalItems == 1 ? L"Deleting 1 item"
-                                         : L"Deleting items";
+            return state.totalItems == 1
+                       ? UiText(L"Deleting 1 item", L"正在删除 1 个项目")
+                       : UiText(L"Deleting items", L"正在删除项目");
         }
-        return L"File operation in progress";
+        return UiText(L"File operation in progress", L"文件操作进行中");
     }
 
     struct InfoPanelSnapshot
@@ -2056,7 +2357,7 @@ namespace
 
         if (!snapshot.nativeRateValid)
         {
-            lstrcpynW(buffer, L"Calculating...",
+            lstrcpynW(buffer, UiText(L"Calculating...", L"正在计算…"),
                       static_cast<int>(bufferLength));
             return;
         }
@@ -2067,7 +2368,7 @@ namespace
             if (!snapshot.itemsValid || snapshot.nativeRate < 0.01 ||
                 snapshot.totalItems < snapshot.completedItems)
             {
-                lstrcpynW(buffer, L"Calculating...",
+                lstrcpynW(buffer, UiText(L"Calculating...", L"正在计算…"),
                           static_cast<int>(bufferLength));
                 return;
             }
@@ -2081,7 +2382,7 @@ namespace
             if (!snapshot.bytesValid || snapshot.nativeRate < 1.0 ||
                 snapshot.totalBytes < snapshot.completedBytes)
             {
-                lstrcpynW(buffer, L"Calculating...",
+                lstrcpynW(buffer, UiText(L"Calculating...", L"正在计算…"),
                           static_cast<int>(bufferLength));
                 return;
             }
@@ -2264,9 +2565,9 @@ namespace
                             percentageBounds, &centeredText, &primaryBrush);
         if (ActiveElements().showCompleteLabel)
         {
-            graphics.DrawString(L"Complete", -1, selectedLabelFont,
-                                labelBounds, &centeredText,
-                                &secondaryBrush);
+            graphics.DrawString(UiText(L"Complete", L"完成"), -1,
+                                selectedLabelFont, labelBounds,
+                                &centeredText, &secondaryBrush);
         }
     }
 
@@ -2519,7 +2820,8 @@ namespace
             }
             else
             {
-                lstrcpynW(summaryText, L"Calculating...",
+                lstrcpynW(summaryText,
+                          UiText(L"Calculating...", L"正在计算…"),
                           ARRAYSIZE(summaryText));
             }
 
@@ -2683,7 +2985,8 @@ namespace
         }
         else
         {
-            lstrcpynW(itemsValue, L"Calculating...", ARRAYSIZE(itemsValue));
+            lstrcpynW(itemsValue, UiText(L"Calculating...", L"正在计算…"),
+                      ARRAYSIZE(itemsValue));
         }
 
         if (elements.showItems)
@@ -3483,7 +3786,9 @@ namespace
         if (snapshot->displayModeLabel.empty())
         {
             snapshot->displayModeLabel =
-                snapshot->expanded ? L"Fewer details" : L"More details";
+                snapshot->expanded
+                    ? UiText(L"Fewer details", L"收起详细信息")
+                    : UiText(L"More details", L"更多详细信息");
         }
 
         DirectUI::Element *cancelButton = FindSkinElement(
@@ -3492,7 +3797,7 @@ namespace
         snapshot->cancelLabel = ReadDirectUiText(cancelButton);
         if (snapshot->cancelLabel.empty())
         {
-            snapshot->cancelLabel = L"Cancel";
+            snapshot->cancelLabel = UiText(L"Cancel", L"取消");
         }
         return true;
     }
@@ -3553,8 +3858,9 @@ namespace
         if (!GetFooterOverlaySnapshot(
                 GetFooterOverlayTile(footerWindow), &snapshot))
         {
-            snapshot.displayModeLabel = L"More details";
-            snapshot.cancelLabel = L"Cancel";
+            snapshot.displayModeLabel =
+                UiText(L"More details", L"更多详细信息");
+            snapshot.cancelLabel = UiText(L"Cancel", L"取消");
         }
 
         Gdiplus::Graphics graphics(deviceContext);
@@ -4338,10 +4644,47 @@ namespace
 
         // Non-authoritative English heuristics observed on this shell build.
         // DirectUI normal-presentation validation remains authoritative.
-        return lstrcmpW(caption, L"Replace or Skip Files") == 0 ||
-               lstrcmpW(caption, L"File In Use") == 0 ||
-               lstrcmpW(caption, L"Folder In Use") == 0 ||
-               lstrcmpW(caption, L"Item Not Found") == 0;
+        // Non-authoritative heuristics observed on this shell build.
+        // DirectUI normal-presentation validation remains authoritative.
+        // 非权威启发式：以下英文标题是在本机 shell 版本上观测到的写法。
+        // 中文版 Windows 的对话框标题是本地化的，只匹配英文会在中文系统上漏判，
+        // 因此这里同时匹配中文。最终判据仍是 DirectUI 正常布局校验，
+        // 多匹配几个候选不会造成误判。
+        static PCWSTR const kSpecialCaptions[] = {
+            L"Replace or Skip Files",
+            L"File In Use",
+            L"Folder In Use",
+            L"Item Not Found",
+            L"替换或跳过文件",
+            L"文件正在使用",
+            L"文件夹正在使用",
+            L"找不到项目",
+        };
+        for (PCWSTR known : kSpecialCaptions)
+        {
+            if (lstrcmpW(caption, known) == 0)
+            {
+                return true;
+            }
+        }
+
+        // 中文标题有时会带附加后缀（例如「文件正在使用 - 名称」），
+        // 这里对中文再放宽为包含匹配。
+        static PCWSTR const kChineseCaptionFragments[] = {
+            L"替换或跳过文件",
+            L"文件正在使用",
+            L"文件夹正在使用",
+            L"找不到项目",
+        };
+        for (PCWSTR fragment : kChineseCaptionFragments)
+        {
+            if (wcsstr(caption, fragment) != nullptr)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     bool IsHostInSpecialOperationState(HWND hostWindow)
@@ -7747,13 +8090,36 @@ namespace
         return result;
     }
 
+    // Releases the per-tile presentation resources owned by this tile. Safe to
+    // call more than once, and safe to call before the destructor body runs.
+    void ReleaseOperationTilePresentationResources(OperationTileElement *tile)
+    {
+        CancelDeferredDisplaySnapshotsForTile(tile);
+        RemoveTransferSummary(tile);
+        DestroyProgressCircle(tile);
+    }
+
     void __cdecl OperationTileElement_Destructor_Hook(
         OperationTileElement *thisPtr)
     {
-        CancelDeferredDisplaySnapshotsForTile(thisPtr);
-        RemoveTransferSummary(thisPtr);
-        DestroyProgressCircle(thisPtr);
+        ReleaseOperationTilePresentationResources(thisPtr);
         OperationTileElement_Destructor_Original(thisPtr);
+    }
+
+    void *__cdecl OperationTileElement_ScalarDeletingDestructor_Hook(
+        OperationTileElement *thisPtr, unsigned int flags)
+    {
+        ReleaseOperationTilePresentationResources(thisPtr);
+        return OperationTileElement_ScalarDeletingDestructor_Original(thisPtr,
+                                                                      flags);
+    }
+
+    void *__cdecl OperationTileElement_VectorDeletingDestructor_Hook(
+        OperationTileElement *thisPtr, unsigned int flags)
+    {
+        ReleaseOperationTilePresentationResources(thisPtr);
+        return OperationTileElement_VectorDeletingDestructor_Original(thisPtr,
+                                                                      flags);
     }
 
     struct WindowResizeResult
@@ -8007,6 +8373,10 @@ namespace
         OperationTileElement_GetProgressHWND_t getProgressHWND;
         OperationTileElement_OnPropertyChanged_t onPropertyChanged;
         OperationTileElement_Destructor_t operationTileDestructor;
+        OperationTileElement_DeletingDestructor_t
+            operationTileScalarDeletingDestructor;
+        OperationTileElement_DeletingDestructor_t
+            operationTileVectorDeletingDestructor;
         COperationStatusTile_UpdateRemainingItemsAndSize_t
             updateRemainingItemsAndSize;
         COperationStatusTile_UpdateSummary_t updateSummary;
@@ -8118,10 +8488,34 @@ namespace
                 false,
             },
             {
-                {LR"(public: virtual __cdecl OperationTileElement::~OperationTileElement(void))"},
+                // Optional: builds that inline this destructor don't emit the
+                // symbol, and that must not disable the whole mod.
+                {
+                    LR"(public: virtual __cdecl OperationTileElement::~OperationTileElement(void))",
+                },
                 &targets->operationTileDestructor,
                 nullptr,
-                false,
+                true,
+            },
+            {
+                // Fallback for builds without the ordinary destructor symbol:
+                // the deleting destructors are what `delete` dispatches to.
+                {
+                    LR"(public: virtual void * __cdecl OperationTileElement::`scalar deleting destructor'(unsigned int))",
+                    LR"(??_GOperationTileElement@@UEAAPEAXI@Z)",
+                },
+                &targets->operationTileScalarDeletingDestructor,
+                nullptr,
+                true,
+            },
+            {
+                {
+                    LR"(public: virtual void * __cdecl OperationTileElement::`vector deleting destructor'(unsigned int))",
+                    LR"(??_EOperationTileElement@@UEAAPEAXI@Z)",
+                },
+                &targets->operationTileVectorDeletingDestructor,
+                nullptr,
+                true,
             },
             {
                 {LR"(private: long __cdecl COperationStatusTile::_UpdateRemainingItemsAndSize(unsigned __int64,unsigned __int64,unsigned __int64,unsigned __int64))"},
@@ -8153,7 +8547,6 @@ namespace
                                         ARRAYSIZE(shell32DllHooks)) ||
             !targets->createTileElement || !targets->progressPositionProp ||
             !targets->getProgressHWND || !targets->onPropertyChanged ||
-            !targets->operationTileDestructor ||
             !targets->updateRemainingItemsAndSize || !targets->updateSummary ||
             !targets->setTileDisplayMode || !targets->calculateRate)
         {
@@ -8166,6 +8559,25 @@ namespace
                    reinterpret_cast<void *>(targets->onPropertyChanged),
                    reinterpret_cast<void *>(targets->operationTileDestructor));
             return false;
+        }
+
+        if (!targets->operationTileDestructor &&
+            !targets->operationTileScalarDeletingDestructor &&
+            !targets->operationTileVectorDeletingDestructor)
+        {
+            Wh_Log(L"Tile-destruction cleanup hook unavailable: shell32 "
+                   L"exposes neither the OperationTileElement destructor nor a "
+                   L"deleting destructor; per-tile cleanup falls back to host "
+                   L"window teardown");
+        }
+        else if (!targets->operationTileDestructor)
+        {
+            Wh_Log(L"OperationTileElement destructor symbol missing; using the "
+                   L"deleting destructors instead Scalar=%p Vector=%p",
+                   reinterpret_cast<void *>(
+                       targets->operationTileScalarDeletingDestructor),
+                   reinterpret_cast<void *>(
+                       targets->operationTileVectorDeletingDestructor));
         }
 
         return true;
@@ -8213,7 +8625,12 @@ namespace
             return false;
         }
 
-        if (!WindhawkUtils::SetFunctionHook(
+        // The tile-destruction cleanup hooks are opportunistic: a build may
+        // expose only one of them, and failing to install one must not abort
+        // the whole mod, because the cleanup also runs when a host operation
+        // window is destroyed.
+        if (targets.operationTileDestructor &&
+            !WindhawkUtils::SetFunctionHook(
                 targets.operationTileDestructor,
                 OperationTileElement_Destructor_Hook,
                 &OperationTileElement_Destructor_Original))
@@ -8221,6 +8638,28 @@ namespace
             Wh_Log(L"Skin setup failed: unable to hook "
                    L"shell32!OperationTileElement destructor");
             return false;
+        }
+
+        if (targets.operationTileScalarDeletingDestructor &&
+            !WindhawkUtils::SetFunctionHook(
+                targets.operationTileScalarDeletingDestructor,
+                OperationTileElement_ScalarDeletingDestructor_Hook,
+                &OperationTileElement_ScalarDeletingDestructor_Original))
+        {
+            Wh_Log(L"Tile cleanup: unable to hook shell32!OperationTileElement "
+                   L"scalar deleting destructor, continuing without it");
+        }
+
+        if (targets.operationTileVectorDeletingDestructor &&
+            targets.operationTileVectorDeletingDestructor !=
+                targets.operationTileScalarDeletingDestructor &&
+            !WindhawkUtils::SetFunctionHook(
+                targets.operationTileVectorDeletingDestructor,
+                OperationTileElement_VectorDeletingDestructor_Hook,
+                &OperationTileElement_VectorDeletingDestructor_Original))
+        {
+            Wh_Log(L"Tile cleanup: unable to hook shell32!OperationTileElement "
+                   L"vector deleting destructor, continuing without it");
         }
 
         if (!WindhawkUtils::SetFunctionHook(
@@ -8277,7 +8716,13 @@ BOOL Wh_ModInit()
     }
 
     SkinTargets targets{};
-    if (!ResolveSkinTargets(&targets) || !InstallSkinHooks(targets))
+    if (!ResolveSkinTargets(&targets))
+    {
+        ShutdownProgressCircleUi();
+        return FALSE;
+    }
+
+    if (!InstallSkinHooks(targets))
     {
         ShutdownProgressCircleUi();
         return FALSE;
