@@ -1,8 +1,10 @@
 // ==WindhawkMod==
 // @id              file-operation-styler
 // @name            File Operation Styler
+// @name:zh-CN      文件操作窗口美化
 // @description     Portable custom presentation for native Explorer file operations with a skin-safe unified presentation.
-// @version         1.0.0
+// @description:zh-CN 为资源管理器原生文件操作提供便携的自定义外观，采用皮肤安全的统一呈现方式，支持主题、颜色与字体自定义。
+// @version         1.0.1
 // @author          digART
 // @github          https://github.com/digart11
 // @license         GPL-3.0
@@ -61,9 +63,13 @@ Settings changes apply to new file-operation windows; operations already in prog
   - enabled: false
     $name: Enable customization
     $description: Turn on themes and custom style settings.
+    $name:zh-CN: 启用自定义
+    $description:zh-CN: 开启主题和自定义样式设置。
   - preset: blueDark
     $name: Theme
     $description: Choose a theme, then change anything below if you want.
+    $name:zh-CN: 主题
+    $description:zh-CN: 选择一个主题，之后可按需修改下面的任意选项。
     $options:
     - blueDark: Blue Dark
     - graphite: Graphite
@@ -71,35 +77,70 @@ Settings changes apply to new file-operation windows; operations already in prog
     - warmDark: Warm Dark
     - light: Light
     - system: Windows / System
+    $options:zh-CN:
+    - blueDark: 深蓝
+    - graphite: 石墨
+    - midnight: 午夜
+    - warmDark: 暖暗
+    - light: 浅色
+    - system: Windows / 系统
   - colors:
     - backgroundOverride: ""
       $name: Background
+      $name:zh-CN: 背景
     - accentOverride: ""
       $name: Accent
       $description: Circle, progress bar, graph, and links.
+      $name:zh-CN: 强调色
+      $description:zh-CN: 用于圆环、进度条、图表和链接。
     - primaryTextOverride: ""
       $name: Main text
       $description: Large numbers and values.
+      $name:zh-CN: 主要文字
+      $description:zh-CN: 大号数字和数值。
     - secondaryTextOverride: ""
       $name: Secondary text
       $description: Labels and smaller text.
+      $name:zh-CN: 次要文字
+      $description:zh-CN: 标签和较小文字。
     - inactiveOverride: ""
       $name: Track / inactive
       $description: Circle track and progress track.
+      $name:zh-CN: 轨道 / 非活动
+      $description:zh-CN: 圆环轨道和进度轨道。
     $name: Colors
     $description: "Leave blank to use the theme color. Enter a hex color such as #2D8BE0."
+    $name:zh-CN: 颜色
+    $description:zh-CN: "留空则使用主题颜色。可输入十六进制颜色，例如 #2D8BE0。"
   - style:
     - circleThickness: 7
       $name: Circle thickness
+      $name:zh-CN: 圆环粗细
     - progressThickness: 8
       $name: Progress bar thickness
+      $name:zh-CN: 进度条粗细
     $name: Progress style
+    $name:zh-CN: 进度样式
   - text:
     - fontPreset: default
       $name: Font
       $description: Choose one font for the whole window.
+      $name:zh-CN: 字体
+      $description:zh-CN: 为整个窗口选择一种字体。
       $options:
       - default: Windows default
+      - segoeUI: Segoe UI
+      - segoeUIVariable: Segoe UI Variable
+      - arial: Arial
+      - calibri: Calibri
+      - tahoma: Tahoma
+      - verdana: Verdana
+      - trebuchetMS: Trebuchet MS
+      - georgia: Georgia
+      - timesNewRoman: Times New Roman
+      - consolas: Consolas
+      $options:zh-CN:
+      - default: Windows 默认
       - segoeUI: Segoe UI
       - segoeUIVariable: Segoe UI Variable
       - arial: Arial
@@ -113,17 +154,27 @@ Settings changes apply to new file-operation windows; operations already in prog
     - customFont: ""
       $name: Custom font
       $description: Optional. Enter an installed font name here to use it instead of the selection above.
+      $name:zh-CN: 自定义字体
+      $description:zh-CN: 可选。在此输入已安装的字体名称，以替代上面的选择。
     - bodySize: 11
       $name: Details text size
       $description: Source and destination, items, speed, time, Complete, and footer text.
+      $name:zh-CN: 详情文字大小
+      $description:zh-CN: 用于来源与目标、项目数、速度、时间、“完成”及页脚文字。
     - summarySize: 23
       $name: Transfer total size
       $description: The large transferred / total line, for example 1.2 GB / 4.0 GB.
+      $name:zh-CN: 传输总大小
+      $description:zh-CN: 显示已传输 / 总计的大号文字行，例如 1.2 GB / 4.0 GB。
     - percentSize: 26
       $name: Circle percentage size
       $description: The percentage number inside the progress circle.
+      $name:zh-CN: 圆环百分比大小
+      $description:zh-CN: 进度圆环内的百分比数字。
     $name: Text
+    $name:zh-CN: 文字
   $name: Customization
+  $name:zh-CN: 自定义
 */
 // ==/WindhawkModSettings==
 
